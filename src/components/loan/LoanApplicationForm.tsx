@@ -116,7 +116,7 @@ const LoanApplicationForm = ({ onBack, onComplete }: LoanApplicationFormProps) =
           
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold">Solar Loan Application</h1>
+              <h1 className="text-3xl font-bold">ChainFly Solar Loan Application</h1>
               <p className="text-muted-foreground mt-1">
                 Step {currentStep} of {steps.length}: {steps[currentStep - 1].title}
               </p>
