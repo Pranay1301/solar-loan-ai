@@ -1,6 +1,10 @@
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Download, TrendingUp, Zap, Calendar, CheckCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Download, TrendingUp, Zap, Calculator } from "lucide-react";
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from "recharts";
 
 interface DashboardProps {
@@ -8,44 +12,89 @@ interface DashboardProps {
 }
 
 const Dashboard = ({ onBack }: DashboardProps) => {
-  // Sample data for charts
-  const emiBreakdownData = [
-    { name: "Principal", value: 180000, color: "hsl(var(--primary))" },
-    { name: "Interest", value: 70000, color: "hsl(var(--secondary))" },
-  ];
+  // User inputs
+  const [loanAmount, setLoanAmount] = useState(250000);
+  const [interestRate, setInterestRate] = useState(8.5);
+  const [loanTenure, setLoanTenure] = useState(10);
+  const [solarCapacity, setSolarCapacity] = useState(3.5);
+  const [systemCostPerKw, setSystemCostPerKw] = useState(71428); // ≈250000/3.5
+  const [monthlyBill, setMonthlyBill] = useState(2000);
+  const [state, setState] = useState("maharashtra");
 
-  const roiData = [
-    { year: "Year 1", savings: 24000, cumulative: 24000 },
-    { year: "Year 5", savings: 120000, cumulative: 120000 },
-    { year: "Year 10", savings: 240000, cumulative: 360000 },
-    { year: "Year 15", savings: 360000, cumulative: 720000 },
-    { year: "Year 20", savings: 480000, cumulative: 1200000 },
-    { year: "Year 25", savings: 600000, cumulative: 1800000 },
-  ];
+  // Calculate subsidy based on PM Surya Ghar scheme
+  const subsidy = useMemo(() => {
+    if (solarCapacity <= 1) return 30000;
+    if (solarCapacity <= 2) return 60000;
+    return 78000; // 3+ kW
+  }, [solarCapacity]);
 
-  const monthlyScheduleData = [
-    { month: "Jan", emi: 22500, principal: 13500, interest: 9000 },
-    { month: "Feb", emi: 22500, principal: 13600, interest: 8900 },
-    { month: "Mar", emi: 22500, principal: 13700, interest: 8800 },
-    { month: "Apr", emi: 22500, principal: 13800, interest: 8700 },
-    { month: "May", emi: 22500, principal: 13900, interest: 8600 },
-    { month: "Jun", emi: 22500, principal: 14000, interest: 8500 },
-  ];
+  // Calculate EMI
+  const monthlyEmi = useMemo(() => {
+    const p = loanAmount;
+    const r = interestRate / 12 / 100;
+    const n = loanTenure * 12;
+    return Math.round((p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
+  }, [loanAmount, interestRate, loanTenure]);
 
-  const energyProductionData = [
-    { month: "Jan", production: 420 },
-    { month: "Feb", production: 450 },
-    { month: "Mar", production: 520 },
-    { month: "Apr", production: 580 },
-    { month: "May", production: 620 },
-    { month: "Jun", production: 600 },
-    { month: "Jul", production: 580 },
-    { month: "Aug", production: 560 },
-    { month: "Sep", production: 540 },
-    { month: "Oct", production: 500 },
-    { month: "Nov", production: 450 },
-    { month: "Dec", production: 420 },
-  ];
+  // Calculate total interest and principal
+  const totalPayment = monthlyEmi * loanTenure * 12;
+  const totalInterest = totalPayment - loanAmount;
+
+  // EMI Breakdown
+  const emiBreakdownData = useMemo(() => [
+    { name: "Principal", value: loanAmount, color: "hsl(var(--primary))" },
+    { name: "Interest", value: totalInterest, color: "hsl(var(--secondary))" },
+  ], [loanAmount, totalInterest]);
+
+  // Calculate ROI data
+  const roiData = useMemo(() => {
+    const annualSavings = monthlyBill * 12;
+    const data = [];
+    let cumulative = 0;
+    for (let year = 1; year <= 25; year++) {
+      // Apply 0.5% degradation per year
+      const degradation = Math.pow(0.995, year - 1);
+      const yearSavings = Math.round(annualSavings * degradation);
+      cumulative += yearSavings;
+      if (year === 1 || year % 5 === 0) {
+        data.push({ year: `Year ${year}`, savings: yearSavings, cumulative });
+      }
+    }
+    return data;
+  }, [monthlyBill]);
+
+  // Monthly schedule for first 6 months
+  const monthlyScheduleData = useMemo(() => {
+    const r = interestRate / 12 / 100;
+    let balance = loanAmount;
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+    return months.map((month) => {
+      const interest = Math.round(balance * r);
+      const principal = monthlyEmi - interest;
+      balance -= principal;
+      return { month, emi: monthlyEmi, principal, interest };
+    });
+  }, [loanAmount, interestRate, monthlyEmi]);
+
+  // Energy production forecast (kWh per month)
+  const energyProductionData = useMemo(() => {
+    const baseProduction = solarCapacity * 120; // ~120 kWh per kW per month average
+    const seasonalVariation = [0.7, 0.75, 0.87, 0.97, 1.03, 1.0, 0.97, 0.93, 0.9, 0.83, 0.75, 0.7];
+    return [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ].map((month, i) => ({
+      month,
+      production: Math.round(baseProduction * seasonalVariation[i])
+    }));
+  }, [solarCapacity]);
+
+  // Calculate ROI percentage
+  const totalSystemCost = solarCapacity * systemCostPerKw;
+  const effectiveCost = totalSystemCost - subsidy;
+  const total25YearSavings = roiData[roiData.length - 1]?.cumulative || 0;
+  const roiPercentage = Math.round((total25YearSavings / effectiveCost) * 100);
+  const paybackYears = (effectiveCost / (monthlyBill * 12)).toFixed(1);
 
   return (
     <div className="min-h-screen bg-background">
@@ -59,8 +108,8 @@ const Dashboard = ({ onBack }: DashboardProps) => {
 
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-4xl font-bold mb-2">Loan Dashboard</h1>
-              <p className="text-muted-foreground">Application ID: SL-2025-00142</p>
+              <h1 className="text-4xl font-bold mb-2">Loan Calculation</h1>
+              <p className="text-muted-foreground">Powered by ChainFly</p>
             </div>
             <Button className="gradient-solar">
               <Download className="mr-2 h-4 w-4" />
@@ -71,39 +120,124 @@ const Dashboard = ({ onBack }: DashboardProps) => {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Key Metrics */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <Card className="p-6 border-2 border-success/20 hover:shadow-strong transition-elegant">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center">
-                <CheckCircle className="h-5 w-5 text-success" />
-              </div>
-              <p className="text-sm font-medium text-muted-foreground">Status</p>
+        {/* Input Form */}
+        <Card className="p-6 mb-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <Calculator className="h-5 w-5 text-primary" />
             </div>
-            <p className="text-3xl font-bold text-success">Approved</p>
-            <p className="text-sm text-muted-foreground mt-1">Credit Score: 87/100</p>
-          </Card>
+            <h2 className="text-2xl font-bold">Loan Parameters</h2>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-6">
+            <div>
+              <Label htmlFor="loanAmount">Loan Amount (₹)</Label>
+              <Input
+                id="loanAmount"
+                type="number"
+                value={loanAmount}
+                onChange={(e) => setLoanAmount(Number(e.target.value))}
+                className="mt-1"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="interestRate">Interest Rate (%)</Label>
+              <Input
+                id="interestRate"
+                type="number"
+                step="0.1"
+                value={interestRate}
+                onChange={(e) => setInterestRate(Number(e.target.value))}
+                className="mt-1"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="loanTenure">Loan Tenure (Years)</Label>
+              <Input
+                id="loanTenure"
+                type="number"
+                value={loanTenure}
+                onChange={(e) => setLoanTenure(Number(e.target.value))}
+                className="mt-1"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="solarCapacity">Solar Capacity (kW)</Label>
+              <Input
+                id="solarCapacity"
+                type="number"
+                step="0.1"
+                value={solarCapacity}
+                onChange={(e) => setSolarCapacity(Number(e.target.value))}
+                className="mt-1"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="systemCost">System Cost per kW (₹)</Label>
+              <Input
+                id="systemCost"
+                type="number"
+                value={systemCostPerKw}
+                onChange={(e) => setSystemCostPerKw(Number(e.target.value))}
+                className="mt-1"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="monthlyBill">Monthly Electricity Bill (₹)</Label>
+              <Input
+                id="monthlyBill"
+                type="number"
+                value={monthlyBill}
+                onChange={(e) => setMonthlyBill(Number(e.target.value))}
+                className="mt-1"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="state">State</Label>
+              <Select value={state} onValueChange={setState}>
+                <SelectTrigger id="state" className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="maharashtra">Maharashtra</SelectItem>
+                  <SelectItem value="karnataka">Karnataka</SelectItem>
+                  <SelectItem value="tamil-nadu">Tamil Nadu</SelectItem>
+                  <SelectItem value="gujarat">Gujarat</SelectItem>
+                  <SelectItem value="rajasthan">Rajasthan</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </Card>
 
+        {/* Key Metrics */}
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
           <Card className="p-6 border-2 border-primary/20 hover:shadow-strong transition-elegant">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                 <Zap className="h-5 w-5 text-primary" />
               </div>
-              <p className="text-sm font-medium text-muted-foreground">Loan Amount</p>
+              <p className="text-sm font-medium text-muted-foreground">System Details</p>
             </div>
-            <p className="text-3xl font-bold">₹2,50,000</p>
-            <p className="text-sm text-muted-foreground mt-1">3.5 kW Solar System</p>
+            <p className="text-3xl font-bold">₹{loanAmount.toLocaleString("en-IN")}</p>
+            <p className="text-sm text-muted-foreground mt-1">{solarCapacity} kW Solar System</p>
           </Card>
 
           <Card className="p-6 border-2 border-secondary/20 hover:shadow-strong transition-elegant">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center">
-                <Calendar className="h-5 w-5 text-secondary" />
+                <TrendingUp className="h-5 w-5 text-secondary" />
               </div>
               <p className="text-sm font-medium text-muted-foreground">Monthly EMI</p>
             </div>
-            <p className="text-3xl font-bold">₹22,500</p>
-            <p className="text-sm text-muted-foreground mt-1">10 years @ 8.5%</p>
+            <p className="text-3xl font-bold">₹{monthlyEmi.toLocaleString("en-IN")}</p>
+            <p className="text-sm text-muted-foreground mt-1">{loanTenure} years @ {interestRate}%</p>
           </Card>
 
           <Card className="p-6 border-2 border-accent/20 hover:shadow-strong transition-elegant">
@@ -113,8 +247,8 @@ const Dashboard = ({ onBack }: DashboardProps) => {
               </div>
               <p className="text-sm font-medium text-muted-foreground">25-Year ROI</p>
             </div>
-            <p className="text-3xl font-bold text-accent">620%</p>
-            <p className="text-sm text-muted-foreground mt-1">Payback: 6.2 years</p>
+            <p className="text-3xl font-bold text-accent">{roiPercentage}%</p>
+            <p className="text-sm text-muted-foreground mt-1">Payback: {paybackYears} years</p>
           </Card>
         </div>
 
@@ -201,18 +335,18 @@ const Dashboard = ({ onBack }: DashboardProps) => {
           <div className="grid md:grid-cols-3 gap-6">
             <div>
               <p className="text-sm text-muted-foreground">PM Surya Ghar Subsidy</p>
-              <p className="text-3xl font-bold text-accent mt-1">₹78,000</p>
-              <p className="text-sm text-muted-foreground mt-1">3+ kW system</p>
+              <p className="text-3xl font-bold text-accent mt-1">₹{subsidy.toLocaleString("en-IN")}</p>
+              <p className="text-sm text-muted-foreground mt-1">{solarCapacity >= 3 ? "3+" : solarCapacity >= 2 ? "2" : "1"} kW system</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Effective Loan Amount</p>
-              <p className="text-3xl font-bold text-primary mt-1">₹1,72,000</p>
-              <p className="text-sm text-muted-foreground mt-1">After subsidy</p>
+              <p className="text-sm text-muted-foreground">Total System Cost</p>
+              <p className="text-3xl font-bold text-primary mt-1">₹{totalSystemCost.toLocaleString("en-IN")}</p>
+              <p className="text-sm text-muted-foreground mt-1">Before subsidy</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Savings (25 Years)</p>
-              <p className="text-3xl font-bold text-secondary mt-1">₹18,00,000</p>
-              <p className="text-sm text-muted-foreground mt-1">Including subsidy</p>
+              <p className="text-3xl font-bold text-secondary mt-1">₹{(total25YearSavings / 100000).toFixed(2)}L</p>
+              <p className="text-sm text-muted-foreground mt-1">Energy bill savings</p>
             </div>
           </div>
         </Card>

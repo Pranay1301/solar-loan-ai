@@ -34,7 +34,7 @@ const Index = () => {
           <div className="max-w-4xl mx-auto text-center space-y-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium animate-float">
               <Sun className="h-4 w-4" />
-              <span>AI-Powered Solar Financing</span>
+              <span>ChainFly AI-Powered Solar Financing</span>
             </div>
             
             <h1 className="text-5xl lg:text-7xl font-bold leading-tight">
@@ -43,7 +43,7 @@ const Index = () => {
             </h1>
             
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Get instant loan approval for your solar installation. AI-driven eligibility assessment, 
+              Get instant loan approval for your solar installation with ChainFly. AI-driven eligibility assessment, 
               real-time subsidy calculation, and seamless KYC verification.
             </p>
             
@@ -63,7 +63,7 @@ const Index = () => {
                 onClick={() => setShowDashboard(true)}
               >
                 <BarChart3 className="mr-2 h-5 w-5" />
-                View Demo Dashboard
+                Loan Calculator
               </Button>
             </div>
           </div>
@@ -182,7 +182,7 @@ const Index = () => {
               Ready to Go Solar?
             </h2>
             <p className="text-xl text-muted-foreground">
-              Start your application now and get instant eligibility results with our AI-powered platform.
+              Start your application now and get instant eligibility results with ChainFly's AI-powered platform.
             </p>
             <Button 
               size="lg" 
