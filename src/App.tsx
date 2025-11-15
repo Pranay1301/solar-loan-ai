@@ -9,6 +9,20 @@ import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
+import SolarSavingsPredictor from "./pages/SolarSavingsPredictor";
+import SystemSizeRecommendation from "./pages/SystemSizeRecommendation";
+import EligibilityAdvisor from "./pages/EligibilityAdvisor";
+import EMIComparison from "./pages/EMIComparison";
+import SubsidyChecker from "./pages/SubsidyChecker";
+import JourneyTracker from "./pages/JourneyTracker";
+import PostInstallationDashboard from "./pages/PostInstallationDashboard";
+import RoofAnalyzer from "./pages/RoofAnalyzer";
+import CreditScoreDetails from "./pages/CreditScoreDetails";
+import InstallationPrep from "./pages/InstallationPrep";
+import PackageComparison from "./pages/PackageComparison";
+import BillForecasting from "./pages/BillForecasting";
+import PersonalizedTips from "./pages/PersonalizedTips";
+import ChatWidget from "./components/ChatWidget";
 
 const queryClient = new QueryClient();
 
@@ -24,9 +38,23 @@ const App = () => (
           <Route path="/auth/signup" element={<Signup />} />
           <Route path="/auth/forgot-password" element={<ForgotPassword />} />
           <Route path="/auth/reset-password" element={<ResetPassword />} />
+          <Route path="/solar-predictor" element={<SolarSavingsPredictor />} />
+          <Route path="/system-recommendation" element={<SystemSizeRecommendation />} />
+          <Route path="/eligibility-advisor" element={<EligibilityAdvisor />} />
+          <Route path="/emi-comparison" element={<EMIComparison />} />
+          <Route path="/subsidy-checker" element={<SubsidyChecker />} />
+          <Route path="/journey-tracker" element={<JourneyTracker />} />
+          <Route path="/dashboard/performance" element={<PostInstallationDashboard />} />
+          <Route path="/roof-analyzer" element={<RoofAnalyzer />} />
+          <Route path="/credit-score" element={<CreditScoreDetails />} />
+          <Route path="/installation-prep" element={<InstallationPrep />} />
+          <Route path="/packages" element={<PackageComparison />} />
+          <Route path="/bill-forecast" element={<BillForecasting />} />
+          <Route path="/tips" element={<PersonalizedTips />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <ChatWidget />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
