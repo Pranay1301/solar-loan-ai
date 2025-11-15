@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Sun, Zap, TrendingUp, Shield, BarChart3, FileCheck } from "lucide-react";
@@ -27,6 +28,26 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Navigation */}
+      <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 font-bold text-xl">
+            <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
+              <Sun className="w-5 h-5 text-primary-foreground" />
+            </div>
+            <span>ChainFly</span>
+          </Link>
+          <div className="flex items-center gap-3">
+            <Link to="/auth/login">
+              <Button variant="ghost">Login</Button>
+            </Link>
+            <Link to="/auth/signup">
+              <Button>Get Started</Button>
+            </Link>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
       <section className="relative overflow-hidden gradient-hero">
         <div className="absolute inset-0 bg-grid-pattern opacity-5" />
